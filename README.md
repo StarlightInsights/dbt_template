@@ -84,6 +84,66 @@ grant role github_action to user identifier($user_name);
 use role github_action;
 create schema if not exists datawarehouse.datawarehouse;
 
+use role sysadmin;
+create database data_loader;
+create schema data_loader.accounting_system;
+
+grant usage on database data_loader to role dbt;
+grant usage on schema data_loader.accounting_system to role dbt;
+
+use role accountadmin;
+grant select on future tables in schema data_loader.accounting_system to role dbt;
+
+use role sysadmin;
+set seed_value = 47;
+
+create or replace table data_loader.accounting_system.stores (
+    id int autoincrement,
+    store_name string,
+    location string
+);
+
+insert into data_loader.accounting_system.stores (store_name, location)
+select
+    'store ' || seq4() as store_name,
+    array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin')[uniform(1, 10, random($seed_value))] as location
+from table(generator(rowcount => 10));
+
+create or replace table customers (
+    id int autoincrement,
+    customer_name string,
+    email string,
+    city string
+);
+
+insert into data_loader.accounting_system.customers (customer_name, email, city)
+select
+    concat(
+        chr(uniform(65, 90, random($seed_value))),
+        lower(randstr(5, random($seed_value))),
+        ' ',
+        chr(uniform(65, 90, random($seed_value))),
+        lower(randstr(7, random($seed_value)))
+    ) as customer_name,
+    lower(concat(randstr(8, random($seed_value)), '@example.com')) as email,
+    array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin', 'Stockholm', 'Helsinki', 'Oslo', 'Lisbon', 'Athens')[uniform(1, 15, random($seed_value))] as city
+from table(generator(rowcount => 500));
+
+create or replace table data_loader.accounting_system.sales (
+    id int autoincrement,
+    customer_id int,
+    store_id int,
+    quantity int,
+    amount decimal(38, 4)
+);
+
+insert into data_loader.accounting_system.sales (customer_id, store_id, quantity, amount)
+select
+    uniform(1, 500, random($seed_value)) as customer_id,
+    uniform(1, 10, random($seed_value)) as store_id,
+    uniform(1, 10, random($seed_value)) as quantity,
+    round(uniform(10, 1000, random($seed_value)), 2) as amount
+from table(generator(rowcount => 100000000));
 ```
 
 _**if you need to drop everything**_
@@ -95,6 +155,7 @@ use role accountadmin;
 drop warehouse dbt;
 drop warehouse github_action;
 drop database datawarehouse;
+drop database data_loader;
 drop role dbt;
 drop role github_action;
 drop user github_action;
