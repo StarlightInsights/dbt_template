@@ -1,6 +1,6 @@
 # dbt_template
 
-Free template for setting up dbt for the first time
+Free template for setting up dbt for the first time: https://github.com/StarlightInsights/dbt_template
 
 Video Guide:
 
