@@ -84,6 +84,11 @@ grant role github_action to user identifier($user_name);
 use role github_action;
 create schema if not exists datawarehouse.datawarehouse;
 
+
+/**
+    Generate demo data
+*/
+
 use role sysadmin;
 create database data_loader;
 create schema data_loader.accounting_system;
@@ -95,6 +100,7 @@ use role accountadmin;
 grant select on future tables in schema data_loader.accounting_system to role dbt;
 
 use role sysadmin;
+
 set seed_value = 47;
 
 create or replace table data_loader.accounting_system.stores (
@@ -106,7 +112,7 @@ create or replace table data_loader.accounting_system.stores (
 insert into data_loader.accounting_system.stores (store_name, location)
 select
     'store ' || seq4() as store_name,
-    array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin')[uniform(1, 10, random($seed_value))] as location
+    coalesce(array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin')[uniform(1, 10, random($seed_value))], 'London') as location
 from table(generator(rowcount => 10));
 
 create or replace table customers (
@@ -118,15 +124,15 @@ create or replace table customers (
 
 insert into data_loader.accounting_system.customers (customer_name, email, city)
 select
-    concat(
+    coalesce(concat(
         chr(uniform(65, 90, random($seed_value))),
         lower(randstr(5, random($seed_value))),
         ' ',
         chr(uniform(65, 90, random($seed_value))),
         lower(randstr(7, random($seed_value)))
-    ) as customer_name,
-    lower(concat(randstr(8, random($seed_value)), '@example.com')) as email,
-    array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin', 'Stockholm', 'Helsinki', 'Oslo', 'Lisbon', 'Athens')[uniform(1, 15, random($seed_value))] as city
+    ), 'Default Name') as customer_name,
+    coalesce(lower(concat(randstr(8, random($seed_value)), '@example.com')), 'default@example.com') as email,
+    coalesce(array_construct('London', 'Paris', 'Berlin', 'Madrid', 'Rome', 'Vienna', 'Amsterdam', 'Brussels', 'Copenhagen', 'Dublin', 'Stockholm', 'Helsinki', 'Oslo', 'Lisbon', 'Athens')[uniform(1, 15, random($seed_value))], 'London') as city
 from table(generator(rowcount => 500));
 
 create or replace table data_loader.accounting_system.sales (
@@ -139,10 +145,10 @@ create or replace table data_loader.accounting_system.sales (
 
 insert into data_loader.accounting_system.sales (customer_id, store_id, quantity, amount)
 select
-    uniform(1, 500, random($seed_value)) as customer_id,
-    uniform(1, 10, random($seed_value)) as store_id,
-    uniform(1, 10, random($seed_value)) as quantity,
-    round(uniform(10, 1000, random($seed_value)), 2) as amount
+    coalesce(uniform(1, 500, random($seed_value)), 1) as customer_id,
+    coalesce(uniform(1, 10, random($seed_value)), 1) as store_id,
+    coalesce(uniform(1, 10, random($seed_value)), 1) as quantity,
+    coalesce(round(uniform(10, 1000, random($seed_value)), 2), 10.00) as amount
 from table(generator(rowcount => 100000000));
 ```
 
