@@ -1,0 +1,6 @@
+{
+    "[sql]": {
+        "editor.defaultFormatter": "dorzey.vscode-sqlfluff",
+        "editor.formatOnSave": true
+    },
+}
