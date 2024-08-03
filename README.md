@@ -35,12 +35,11 @@ grant usage, create schema on database datawarehouse to role dbt;
     Snowflake credentials.
 */
 set developer_username = 'martin';
-set password = 'LGp9Ad7kl2gNrdihso'; -- Use a password generator, like: avast.com/random-password-generator
+set password = ''; -- Use a password generator, like: avast.com/random-password-generator
 set email = 'martin@starlightinsights.com';
 
 use role securityadmin;
-create user if not exists identifier($developer_username);
-alter user if exists identifier($developer_username) set
+create user if not exists identifier($developer_username)
     password = $password
     email = $email
     must_change_password = true;
@@ -48,8 +47,7 @@ alter user if exists identifier($developer_username) set
 -- Here you can grant the appropriate roles to the developer.
 
 set dbt_developer_username = concat('dbt_', $developer_username);
-create user if not exists identifier($dbt_developer_username);
-alter user if exists identifier($dbt_developer_username) set
+create user if not exists identifier($dbt_developer_username)
     password = $password
     email = $email
     must_change_password = false;
@@ -59,14 +57,13 @@ grant role dbt to user identifier($dbt_developer_username);
 /**
     Deployer setup
 */
-set github_action_password = '1TdRji0QjXophDhWMs';
+set github_action_password = '';
 
 use role securityadmin;
 
 create role if not exists github_action;
 
-create user if not exists github_action;
-alter user if exists github_action set
+create user if not exists github_action
     password = $github_action_password
     must_change_password = false;
     
@@ -86,6 +83,23 @@ grant role github_action to user identifier($user_name);
 
 use role github_action;
 create schema if not exists datawarehouse.datawarehouse;
+
+```
+
+_**if you need to drop everything**_
+```sql
+/**
+    Drop everything
+*/
+use role accountadmin;
+drop warehouse dbt;
+drop warehouse github_action;
+drop database datawarehouse;
+drop role dbt;
+drop role github_action;
+drop user github_action;
+drop user identifier($developer_username);
+drop user identifier($dbt_developer_username);
 ```
 
 ## Codespace Secrets
