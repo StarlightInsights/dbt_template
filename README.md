@@ -8,6 +8,32 @@ Video Guide:
 
 ```sql
 /**
+    Recommended Account Settings
+    
+    Starlight Insights recommends always 
+    creating resource monitors.
+    
+    Starlight Insights recommends setting 
+    STATEMENT_TIMEOUT_IN_SECONDS to a lower 
+    value than the default 172800 seconds (48 hours).
+    Snowflake has a rare bug where some queries don't
+    terminate, and will run until STATEMENT_TIMEOUT_IN_SECONDS.
+*/
+use role accountadmin;
+
+create resource monitor if not exists account_monitor
+with 
+  credit_quota = 50
+  frequency = monthly
+  start_timestamp = immediately
+  triggers
+    on 80 percent do notify
+    on 90 percent do suspend
+    on 100 percent do suspend_immediate;
+
+alter account set statement_timeout_in_seconds = 3600; -- 1 hour
+
+/**
     Account setup
 */
 use role securityadmin;
@@ -88,7 +114,6 @@ create schema if not exists datawarehouse.datawarehouse;
 /**
     Generate demo data
 */
-
 use role sysadmin;
 create database data_loader;
 create schema data_loader.accounting_system;
