@@ -31,6 +31,8 @@ with
     on 90 percent do suspend
     on 100 percent do suspend_immediate;
 
+alter account set resource_monitor = account_monitor;
+
 alter account set statement_timeout_in_seconds = 3600; -- 1 hour
 
 /**
